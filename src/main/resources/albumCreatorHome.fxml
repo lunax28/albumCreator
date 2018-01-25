@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
@@ -10,15 +11,17 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="AlbumCreatorController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="327.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="AlbumCreatorController">
    <top>
       <VBox BorderPane.alignment="CENTER">
          <children>
             <HBox>
                <children>
-                  <MenuBar>
+                  <MenuBar prefHeight="29.0" prefWidth="653.0" HBox.hgrow="ALWAYS">
                     <menus>
                       <Menu mnemonicParsing="false" text="File">
                         <items>
@@ -43,20 +46,74 @@
       </VBox>
    </top>
    <left>
-      <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+      <VBox alignment="CENTER" prefHeight="298.0" prefWidth="139.0" BorderPane.alignment="CENTER">
          <children>
-            <Label text="Label" />
-            <TextArea fx:id="upcTextArea" prefHeight="200.0" prefWidth="200.0" />
+            <Label alignment="CENTER" contentDisplay="CENTER" text="UPC" textAlignment="CENTER" VBox.vgrow="NEVER" />
+            <TextArea fx:id="upcTextArea" prefHeight="234.0" prefWidth="144.0" promptText="Insert here a list of UPCs" VBox.vgrow="ALWAYS">
+               <VBox.margin>
+                  <Insets left="10.0" top="5.0" />
+               </VBox.margin>
+            </TextArea>
          </children>
+         <BorderPane.margin>
+            <Insets top="10.0" />
+         </BorderPane.margin>
+         <padding>
+            <Insets bottom="10.0" />
+         </padding>
       </VBox>
    </left>
    <center>
-      <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+      <VBox maxHeight="298.0" prefHeight="298.0" prefWidth="199.0" BorderPane.alignment="CENTER">
          <children>
-            <Button mnemonicParsing="false" onAction="#createAlbumButton" text="Button" />
-            <TextField fx:id="songsNumberTextField" />
-            <CheckBox fx:id="itmspCheckbox" mnemonicParsing="false" text="CheckBox" />
+            <HBox VBox.vgrow="NEVER">
+               <children>
+                  <Button fx:id="chooseFolderButton" mnemonicParsing="false" onAction="#chooseFolder" text="Folder" />
+                  <TextField fx:id="folderPathTextField" editable="false" prefWidth="380.0" promptText="The path to your folder containing your albums..." HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets left="10.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Region>
+                     <HBox.margin>
+                        <Insets left="50.0" />
+                     </HBox.margin>
+                  </Region>
+               </children>
+               <VBox.margin>
+                  <Insets top="32.0" />
+               </VBox.margin>
+            </HBox>
+            <CheckBox fx:id="itmspCheckbox" accessibleHelp="Test" accessibleText="Test" mnemonicParsing="false" text="Leave as folder?" VBox.vgrow="NEVER">
+               <VBox.margin>
+                  <Insets top="10.0" />
+               </VBox.margin>
+            </CheckBox>
+            <HBox alignment="CENTER_LEFT" VBox.vgrow="NEVER">
+               <children>
+                  <Label text="Track Number: " />
+                  <TextField fx:id="songsNumberTextField" maxWidth="50.0" text="25" />
+               </children>
+               <padding>
+                  <Insets top="5.0" />
+               </padding>
+            </HBox>
+            <Button alignment="CENTER_RIGHT" contentDisplay="RIGHT" defaultButton="true" mnemonicParsing="false" onAction="#createAlbumButton" text="Create" textAlignment="CENTER">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+               <VBox.margin>
+                  <Insets top="50.0" />
+               </VBox.margin>
+            </Button>
+            <Region />
          </children>
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets>
+         <padding>
+            <Insets left="10.0" />
+         </padding>
       </VBox>
    </center>
 </BorderPane>
