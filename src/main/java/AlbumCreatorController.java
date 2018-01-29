@@ -5,7 +5,10 @@ import javafx.scene.control.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.commons.io.FilenameUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -48,6 +51,9 @@ public class AlbumCreatorController {
     @FXML
     private File selectedDirectoryPath;
 
+    @FXML
+    private int songsPerAlbum;
+
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
     void initialize() {
@@ -86,6 +92,16 @@ public class AlbumCreatorController {
             return;
         }
 
+
+        try {
+            this.songsPerAlbum = Integer.parseInt(this.songsNumberTextField.getText());
+        } catch (NumberFormatException e) {
+            displayErrorMessage("Enter a valid number!");
+            return;
+        }
+
+        //TODO Add Exception dialog!
+
         createFolders();
 
 /*
@@ -101,12 +117,14 @@ public class AlbumCreatorController {
 
         sortTracks();
 
-        //TODO
-        //sortAlbumCovers();
-        //createItmspPackage();
+        System.out.println("sortAlbumCovers()");
+        sortAlbumCovers();
+
+        if (!itmspCheckbox.isSelected()){
+            createItmspPackage();
+        }
 
     }
-
 
     private void createFolders(){
 
@@ -139,7 +157,7 @@ public class AlbumCreatorController {
             return;
         }
 
-        int songsPerAlbum = Integer.parseInt(this.songsNumberTextField.getText());
+        //int songsPerAlbum = Integer.parseInt(this.songsNumberTextField.getText());
 
         File[] listOfTrackFiles = tracksDir.listFiles();
 
@@ -161,7 +179,7 @@ public class AlbumCreatorController {
 
             if(listOfDir[i].isDirectory() && listOfDir[i].getName().matches("[0-9]{13}")) {
 
-                for (int z = 0; z < songsPerAlbum; z++) {
+                for (int z = 0; z < this.songsPerAlbum; z++) {
 
                     int indexRandom = ThreadLocalRandom.current().nextInt(0, randList.size());
                     System.out.println("indexRandom: " + indexRandom);
@@ -191,6 +209,104 @@ public class AlbumCreatorController {
         }
     }
 
+    private void sortAlbumCovers(){
+
+        File[] listOfDir = selectedDirectoryPath.listFiles();
+
+
+        for(int i = 0; i < listOfDir.length-1; i++){
+
+            System.out.println("listOfDir[i].getName(): " + listOfDir[i].getName());
+
+            String ext = FilenameUtils.getExtension(listOfDir[i].getName());
+            System.out.println("EXT: " + ext);
+
+            if(ext.equals("jpg") || ext.equals("jpeg")){
+
+                if(!checkImageSize(listOfDir[i])){
+
+                    displayErrorMessage("Check image size!!! Not 3000x3000");
+                    return;
+                }
+
+
+
+                System.out.println("COVER FROM: " + listOfDir[i].getAbsolutePath());
+                System.out.println("COVER TO: " + selectedDirectoryPath + "/"+ stripExtension(listOfDir[i].getName()).toString()+ "/" + listOfDir[i].getName());
+
+                try {
+                    Files.move(Paths.get(listOfDir[i].getAbsolutePath()), Paths.get(selectedDirectoryPath + "/"+ stripExtension(listOfDir[i].getName()).toString() + "/" + listOfDir[i].getName()), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    displayErrorMessage("Failed to move an album cover!");
+                    return;
+                    //TODO display exception dialog
+                }
+
+            }
+
+        }
+
+    }
+
+    private boolean checkImageSize(File file) {
+        double bytes = file.length();
+
+        System.out.println("File Size: " + String.format("%.2f", bytes/1024) + "kb");
+
+        try{
+
+            BufferedImage image = ImageIO.read(file);
+            int width = image.getWidth();
+            int height = image.getHeight();
+
+            System.out.println("Width: " + width);
+            System.out.println("Height: " + height);
+
+            if(width + height < 6000){
+                return false;
+            }
+
+
+
+        } catch (Exception ex){
+            ex.printStackTrace();
+        }
+
+        return true;
+    }
+
+
+    private void createItmspPackage() {
+
+        File[] listOfDir = selectedDirectoryPath.listFiles();
+
+        for (int i = 0; i < listOfDir.length-1; i++) {
+            if (listOfDir[i].isDirectory()) {
+                File re = new File(listOfDir[i].getAbsolutePath().concat(".itmsp"));
+                listOfDir[i].renameTo(re);
+            }
+        }
+    }
+
+    private String stripExtension(String str) {
+
+        // Handle null case specially.
+        if (str == null) {
+            return null;
+        }
+
+        // Get position of last '.'.
+        int pos = str.lastIndexOf(".");
+
+        // If there wasn't any '.' just return the string as is.
+        if (pos == -1) {
+            return str;
+        }
+
+        // Otherwise return the string, up to the dot.
+        return str.substring(0, pos);
+    }
 
 
     @FXML
