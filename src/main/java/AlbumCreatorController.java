@@ -10,10 +10,7 @@ import javafx.stage.Stage;
 import org.apache.commons.io.FilenameUtils;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -56,6 +53,8 @@ public class AlbumCreatorController {
 
     @FXML
     private int songsPerAlbum;
+
+    private int upcCount;
 
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -111,7 +110,17 @@ public class AlbumCreatorController {
         createFolders();
         System.out.println("sortTracks()");
 
-        sortTracks();
+        try {
+            sortTracks();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            displayExceptionDialog(e,e.getMessage());
+            return;
+        } catch (Exception e) {
+            e.printStackTrace();
+            displayExceptionDialog(e,e.getMessage());
+            return;
+        }
 
         System.out.println("sortAlbumCovers()");
         try {
@@ -158,6 +167,7 @@ public class AlbumCreatorController {
             String upc = scanner.nextLine();
             //Check to make sure if the UPCs in the list are correctly formatted
             if (!upc.matches("[0-9]{13}")) {
+                upcCount += 1;
                 displayErrorMessage("UPC format error!");
                 return;
             }
@@ -175,7 +185,7 @@ public class AlbumCreatorController {
     /**
      * Helper method to sort all the tracks in each folder
      */
-    private void sortTracks(){
+    private void sortTracks() throws Exception {
 
         //Keep track of tracks folder
         File tracksDir = new File(selectedDirectoryPath + "/tracks");
@@ -187,6 +197,17 @@ public class AlbumCreatorController {
 
         //An array containing all the files inside the tracks folder
         File[] listOfTrackFiles = tracksDir.listFiles();
+
+        if(listOfTrackFiles.length <= 1){
+            throw new FileNotFoundException("No files in tracks folder!");
+        }
+
+        int totalSongs = this.songsPerAlbum * this.upcCount;
+
+        if(totalSongs < listOfTrackFiles.length){
+           throw new Exception("Insufficient track files!!");
+        }
+
 
         //An array containing all the files and directories inside the root folder
         File[] listOfDir = selectedDirectoryPath.listFiles();
@@ -211,6 +232,10 @@ public class AlbumCreatorController {
 
                 //Choose this.songsPerAlbum tracks to place inside listOfDir[i] folder
                 for (int z = 0; z < this.songsPerAlbum; z++) {
+
+                    if(randList.size() < 1){
+                        return;
+                    }
 
                     //Pick a random number between 0 and randList's size
                     int indexRandom = ThreadLocalRandom.current().nextInt(0, randList.size());
