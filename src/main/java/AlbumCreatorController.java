@@ -5,7 +5,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.commons.io.FilenameUtils;
 import javax.imageio.ImageIO;
@@ -54,10 +53,11 @@ public class AlbumCreatorController {
     @FXML
     private int songsPerAlbum;
 
-    private int upcCount;
+    private int upcCount = 0;
 
 
-    @FXML // This method is called by the FXMLLoader when initialization is complete
+    @FXML
+        // This method is called by the FXMLLoader when initialization is complete
     void initialize() {
         assert upcTextArea != null : "fx:id=\"upcTextArea\" was not injected: check your FXML file 'albumCreatorHome.fxml'.";
         assert chooseFolderButton != null : "fx:id=\"chooseFolderButton\" was not injected: check your FXML file 'albumCreatorHome.fxml'.";
@@ -78,31 +78,22 @@ public class AlbumCreatorController {
     @FXML
     void createAlbumButton(ActionEvent event) {
         //Check for correct entries
-        if(this.upcTextArea.getText().isEmpty()){
+        if (this.upcTextArea.getText().isEmpty()) {
             displayWarningAlert("Insert a valid list of UPC first!");
             return;
         }
 
-        if(this.folderPathTextField.getText().isEmpty()){
+        if (this.folderPathTextField.getText().isEmpty()) {
             displayWarningAlert("No folder selected!");
             return;
         }
 
         //Ask for confirmation before proceeding
         ButtonType bt = displayConfirmationAlert("Before continuing, make sure you have:\n- Inserted your album covers\n- Placed your tracks inside a folder named Track");
-        if(bt == ButtonType.OK){
+        if (bt == ButtonType.OK) {
             System.out.println("ButtonType.OK");
-        } else{
+        } else {
             System.out.println("CANCELLED");
-            return;
-        }
-
-        //Store the number of songs per album into a global variable
-        try {
-            this.songsPerAlbum = Integer.parseInt(this.songsNumberTextField.getText());
-        } catch (NumberFormatException e) {
-            displayExceptionDialog(e,"Enter a valid number!");
-//            displayErrorMessage("Enter a valid number!");
             return;
         }
 
@@ -114,11 +105,11 @@ public class AlbumCreatorController {
             sortTracks();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            displayExceptionDialog(e,e.getMessage());
+            displayExceptionDialog(e, e.getMessage());
             return;
         } catch (Exception e) {
             e.printStackTrace();
-            displayExceptionDialog(e,e.getMessage());
+            displayExceptionDialog(e, e.getMessage());
             return;
         }
 
@@ -127,14 +118,13 @@ public class AlbumCreatorController {
             sortAlbumCovers();
         } catch (IOException e) {
             e.printStackTrace();
-            displayExceptionDialog(e,"Failed to move an album cover!!");
+            displayExceptionDialog(e, "Failed to move an album cover!!");
             return;
         }
 
-        if (!itmspCheckbox.isSelected()){
+        if (!itmspCheckbox.isSelected()) {
             createItmspPackage();
         }
-
     }
 
     /**
@@ -142,7 +132,6 @@ public class AlbumCreatorController {
      */
     @FXML
     void chooseFolder(ActionEvent event) {
-
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Folder");
         String userDir = System.getProperty("user.home");
@@ -150,7 +139,7 @@ public class AlbumCreatorController {
         chooser.setInitialDirectory(defaultDirectory);
         this.selectedDirectoryPath = chooser.showDialog(new Stage());
 
-        if(selectedDirectoryPath != null){
+        if (selectedDirectoryPath != null) {
             this.folderPathTextField.setText(selectedDirectoryPath.getAbsolutePath().toString());
         }
     }
@@ -158,27 +147,25 @@ public class AlbumCreatorController {
     /**
      * Helper method to create new folders
      */
-    private void createFolders(){
-
+    private void createFolders() {
         //For each UPC in the list create a folder
         Scanner scanner = new Scanner(this.upcTextArea.getText());
         while (scanner.hasNextLine()) {
-
             String upc = scanner.nextLine();
             //Check to make sure if the UPCs in the list are correctly formatted
             if (!upc.matches("[0-9]{13}")) {
-                upcCount += 1;
                 displayErrorMessage("UPC format error!");
                 return;
             }
 
             System.out.println("new folder: " + selectedDirectoryPath + "/" + upc);
 
-            boolean success = (new File(selectedDirectoryPath + "/"+ upc)).mkdirs();
+            boolean success = (new File(selectedDirectoryPath + "/" + upc)).mkdirs();
             if (!success) {
                 displayErrorMessage("Error while creating a folder!");
                 return;
             }
+            upcCount += 1;
         }
     }
 
@@ -187,10 +174,17 @@ public class AlbumCreatorController {
      */
     private void sortTracks() throws Exception {
 
+        //Store the number of songs per album into a global variable
+        try {
+            this.songsPerAlbum = Integer.parseInt(this.songsNumberTextField.getText());
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Enter a valid number!"); //displayExceptionDialog(e,"Enter a valid number!");
+        }
+
         //Keep track of tracks folder
         File tracksDir = new File(selectedDirectoryPath + "/tracks");
         //if it doesn't exist, an error message is shown
-        if(!tracksDir.exists()){
+        if (!tracksDir.exists()) {
             displayErrorMessage("tracks folder not created!!");
             return;
         }
@@ -198,14 +192,14 @@ public class AlbumCreatorController {
         //An array containing all the files inside the tracks folder
         File[] listOfTrackFiles = tracksDir.listFiles();
 
-        if(listOfTrackFiles.length <= 1){
+        if (listOfTrackFiles.length <= 1) {
             throw new FileNotFoundException("No files in tracks folder!");
         }
 
-        int totalSongs = this.songsPerAlbum * this.upcCount;
+        int totalSongsPerAlbum = this.songsPerAlbum * this.upcCount;
 
-        if(totalSongs < listOfTrackFiles.length){
-           throw new Exception("Insufficient track files!!");
+        if (listOfTrackFiles.length <= totalSongsPerAlbum) {
+            throw new Exception("Insufficient track files!!");
         }
 
 
@@ -217,32 +211,32 @@ public class AlbumCreatorController {
         }*/
 
         //Create a list with an ordered list of ints up to the length of listOfTrackFiles
-        List<Integer> randList = new ArrayList<>();
-        for(int i = 0; i < listOfTrackFiles.length; i++){
-            randList.add(i);
+        List<Integer> indexList = new ArrayList<>();
+        for (int i = 0; i < listOfTrackFiles.length; i++) {
+            indexList.add(i);
         }
 
-        System.out.println("original randList: " + randList);
+        System.out.println("original indexList: " + indexList);
 
         //first file is _DS STORE!!!!
-        for(int i = 0; i < listOfDir.length; i++){
+        for (int i = 0; i < listOfDir.length; i++) {
 
             //for each upc folder inside the root folder
-            if(listOfDir[i].isDirectory() && listOfDir[i].getName().matches("[0-9]{13}")) {
+            if (listOfDir[i].isDirectory() && listOfDir[i].getName().matches("[0-9]{13}")) {
 
                 //Choose this.songsPerAlbum tracks to place inside listOfDir[i] folder
                 for (int z = 0; z < this.songsPerAlbum; z++) {
 
-                    if(randList.size() < 1){
+                    if (indexList.size() < 1) {
                         return;
                     }
 
-                    //Pick a random number between 0 and randList's size
-                    int indexRandom = ThreadLocalRandom.current().nextInt(0, randList.size());
+                    //Pick a random number between 0 and indexList's size
+                    int indexRandom = ThreadLocalRandom.current().nextInt(0, indexList.size());
                     System.out.println("indexRandom: " + indexRandom);
 
-                    //Get the element inside randList corresponding to indexRandom index
-                    int indexRandFile = randList.get(indexRandom);
+                    //Get the element inside indexList corresponding to indexRandom index
+                    int indexRandFile = indexList.get(indexRandom);
 
                     System.out.println("FILE NAME: " + listOfTrackFiles[indexRandFile]);
 
@@ -250,9 +244,9 @@ public class AlbumCreatorController {
                     if (listOfTrackFiles[indexRandFile].isFile()) {
 
                         //Move it to the listOfDir[i] folder
-                        System.out.println("MOVING TO: " + listOfDir[i].getAbsolutePath() + "/"+ listOfTrackFiles[indexRandFile].getName());
+                        System.out.println("MOVING TO: " + listOfDir[i].getAbsolutePath() + "/" + listOfTrackFiles[indexRandFile].getName());
                         try {
-                            Files.move(Paths.get(listOfTrackFiles[indexRandFile].getAbsolutePath()), Paths.get(listOfDir[i].getAbsolutePath() + "/"+ listOfTrackFiles[indexRandFile].getName()), StandardCopyOption.REPLACE_EXISTING);
+                            Files.move(Paths.get(listOfTrackFiles[indexRandFile].getAbsolutePath()), Paths.get(listOfDir[i].getAbsolutePath() + "/" + listOfTrackFiles[indexRandFile].getName()), StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -261,9 +255,9 @@ public class AlbumCreatorController {
                         System.out.println("Directory " + listOfTrackFiles[indexRandFile].getName());
                     }
 
-                    //Remove the randList element at index: indexRandom
-                    randList.remove(indexRandom);
-                    System.out.println("randList updated: " + randList);
+                    //Remove the indexList element at index: indexRandom
+                    indexList.remove(indexRandom);
+                    System.out.println("indexList updated: " + indexList);
 
                 }
             }
@@ -277,28 +271,24 @@ public class AlbumCreatorController {
 
         File[] listOfDir = selectedDirectoryPath.listFiles();
 
-        for(int i = 0; i < listOfDir.length-1; i++){
+        for (int i = 0; i < listOfDir.length - 1; i++) {
 
             System.out.println("listOfDir[i].getName(): " + listOfDir[i].getName());
             //if listOfDir[i] is a jpeg
             String ext = FilenameUtils.getExtension(listOfDir[i].getName());
             System.out.println("EXT: " + ext);
 
-            if(ext.equals("jpg") || ext.equals("jpeg")){
+            if (ext.equals("jpg") || ext.equals("jpeg")) {
 
-                if(!checkImageSize(listOfDir[i])){
-
+                if (!checkImageSize(listOfDir[i])) {
                     displayErrorMessage("Check image size!!! Not 3000x3000");
                     return;
                 }
 
                 System.out.println("COVER FROM: " + listOfDir[i].getAbsolutePath());
-                System.out.println("COVER TO: " + selectedDirectoryPath + "/"+ stripExtension(listOfDir[i].getName()).toString()+ "/" + listOfDir[i].getName());
+                System.out.println("COVER TO: " + selectedDirectoryPath + "/" + stripExtension(listOfDir[i].getName()).toString() + "/" + listOfDir[i].getName());
 
-
-                Files.move(Paths.get(listOfDir[i].getAbsolutePath()), Paths.get(selectedDirectoryPath + "/"+ stripExtension(listOfDir[i].getName()).toString() + "/" + listOfDir[i].getName()), StandardCopyOption.REPLACE_EXISTING);
-
-
+                Files.move(Paths.get(listOfDir[i].getAbsolutePath()), Paths.get(selectedDirectoryPath + "/" + stripExtension(listOfDir[i].getName()).toString() + "/" + listOfDir[i].getName()), StandardCopyOption.REPLACE_EXISTING);
 
             }
 
@@ -313,10 +303,10 @@ public class AlbumCreatorController {
 
         File[] listOfDir = selectedDirectoryPath.listFiles();
 
-        for (int i = 0; i < listOfDir.length-1; i++) {
+        for (int i = 0; i < listOfDir.length - 1; i++) {
             if (listOfDir[i].isDirectory()) {
-                File re = new File(listOfDir[i].getAbsolutePath().concat(".itmsp"));
-                listOfDir[i].renameTo(re);
+                File itmspFile = new File(listOfDir[i].getAbsolutePath().concat(".itmsp"));
+                listOfDir[i].renameTo(itmspFile);
             }
         }
     }
@@ -327,9 +317,9 @@ public class AlbumCreatorController {
     private boolean checkImageSize(File file) {
         double bytes = file.length();
 
-        System.out.println("File Size: " + String.format("%.2f", bytes/1024) + "kb");
+        System.out.println("File Size: " + String.format("%.2f", bytes / 1024) + "kb");
 
-        try{
+        try {
 
             BufferedImage image = ImageIO.read(file);
             int width = image.getWidth();
@@ -338,11 +328,11 @@ public class AlbumCreatorController {
             System.out.println("Width: " + width);
             System.out.println("Height: " + height);
 
-            if(width + height < 6000){
+            if (width + height < 6000) {
                 return false;
             }
 
-        } catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
 
@@ -370,7 +360,6 @@ public class AlbumCreatorController {
         // Otherwise return the string, up to the dot.
         return str.substring(0, pos);
     }
-
 
 
     private void displayErrorMessage(String textMessage) {
@@ -445,10 +434,10 @@ public class AlbumCreatorController {
         alert.setHeaderText("Album Creator v1.0\n");
         alert.setContentText("1) Inserire una lista di UPC;\n" +
                 "2) Selezionare una cartella vuota nel desktop dentro la quale saranno salvati gli album;\n" +
-        "3) Inserire il numero di tracce per album;\n" +
-        "4) Inserire le copertine;\n" +
-        "5) Decidere se trasformare le cartelle in pacchetti di iTunes Producer con il relativo checkbox;\n" +
-        "6) Procedere alla creazione dei file.");
+                "3) Inserire il numero di tracce per album;\n" +
+                "4) Inserire le copertine;\n" +
+                "5) Decidere se trasformare le cartelle in pacchetti di iTunes Producer con il relativo checkbox;\n" +
+                "6) Procedere alla creazione dei file.");
         alert.showAndWait();
     }
 
